@@ -64,3 +64,4 @@ asyncio_mode = "auto"
 
 [tool.mutmut]
 source_paths = ["app"]
+also_copy = ["alembic.ini", "migrations"]
