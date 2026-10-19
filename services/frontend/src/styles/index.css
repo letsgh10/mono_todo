@@ -1214,6 +1214,22 @@ button { cursor: pointer; }
   font-weight: 500;
 }
 
+.history-list { display: flex; flex-direction: column; gap: 6px; max-height: 60vh; overflow-y: auto; }
+
+.history-row {
+  padding: 8px 12px;
+  border: 1px solid var(--field-border);
+  border-radius: 12px;
+  background: #f8fafc;
+  overflow-wrap: anywhere;
+}
+
+.history-field { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.history-change { font-size: 13px; font-weight: 600; margin: 2px 0; }
+.history-old { color: var(--muted); text-decoration: line-through; }
+.history-meta { font-size: 11px; color: var(--muted); }
+.history-empty { padding: 20px; text-align: center; font-size: 13px; color: var(--muted); }
+
 .member-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
 
 .member-row {

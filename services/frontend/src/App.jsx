@@ -587,6 +587,114 @@ function MembersModal({ project, members, userEmail, connected, send, onClose })
   )
 }
 
+// ── History modal ─────────────────────────────────────────────────────────────
+const PRIORITY_LABEL = { low: 'Niski', medium: 'Średni', high: 'Wysoki' }
+const STATUS_LABEL = { todo: 'Do zrobienia', done: 'Zrobione' }
+const HISTORY_FIELD_LABEL = {
+  title: 'Tytuł',
+  description: 'Opis',
+  status: 'Status',
+  priority: 'Priorytet',
+  due_date: 'Termin',
+  category_id: 'Kategoria',
+  project_id: 'Projekt',
+  tags: 'Tagi',
+}
+
+// The API returns naive UTC timestamps (no offset); append Z so the browser converts to local time.
+function parseServerDate(value) {
+  return new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(value) ? value : value + 'Z')
+}
+
+function formatHistoryValue(field, value, { categories, projects }) {
+  if (value === null || value === undefined || value === '') return '—'
+  switch (field) {
+    case 'status': return STATUS_LABEL[value] ?? value
+    case 'priority': return PRIORITY_LABEL[value] ?? value
+    case 'due_date': {
+      const d = new Date(value.replace(' ', 'T'))
+      return isNaN(d) ? value : d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: 'numeric' })
+    }
+    case 'category_id': return categories.find(c => String(c.id) === value)?.name ?? `#${value}`
+    case 'project_id': return projects.find(p => String(p.id) === value)?.name ?? `#${value}`
+    case 'tags':
+      try {
+        const tags = JSON.parse(value)
+        return tags.length ? tags.map(t => `#${t}`).join(' ') : 'brak'
+      } catch {
+        return value
+      }
+    default: return value
+  }
+}
+
+function HistoryModal({ task, categories, projects, members, onClose }) {
+  const [entries, setEntries] = useState(undefined) // undefined = loading
+  const [error, setError] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    setEntries(undefined)
+    setError('')
+    api.getTaskHistory(task.id)
+      .then(data => { if (!cancelled) setEntries(data) })
+      .catch(err => { if (!cancelled) setError(err.message) })
+    return () => { cancelled = true }
+  }, [task.id, reloadKey])
+
+  function author(entry) {
+    if (entry.changed_by_id == null) return null
+    if (task.project_id == null) return 'Ty'
+    return members?.find(m => m.user_id === entry.changed_by_id)?.email ?? `Użytkownik #${entry.changed_by_id}`
+  }
+
+  const lookups = { categories, projects }
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal" style={{ maxWidth: 520 }}>
+        <div className="modal-header">
+          <h2>Historia: {task.title}</h2>
+          <button className="icon-btn" onClick={onClose} aria-label="Zamknij"><Icon name="x" size={16} /></button>
+        </div>
+        <div className="modal-body">
+          {error ? (
+            <>
+              <div className="alert alert-error">Nie udało się pobrać historii: {error}</div>
+              <button className="btn btn-secondary btn-sm" onClick={() => setReloadKey(k => k + 1)}>Spróbuj ponownie</button>
+            </>
+          ) : entries === undefined ? (
+            <div className="modal-loading"><span className="spinner" /></div>
+          ) : entries.length === 0 ? (
+            <div className="history-empty">Brak zmian dla tego zadania</div>
+          ) : (
+            <div className="history-list">
+              {[...entries].reverse().map(e => (
+                <div key={e.id} className="history-row">
+                  <div className="history-field">{HISTORY_FIELD_LABEL[e.field] ?? e.field}</div>
+                  <div className="history-change">
+                    <span className="history-old">{formatHistoryValue(e.field, e.old_value, lookups)}</span>
+                    <span aria-hidden="true"> → </span>
+                    <span className="history-new">{formatHistoryValue(e.field, e.new_value, lookups)}</span>
+                  </div>
+                  <div className="history-meta">
+                    {parseServerDate(e.changed_at).toLocaleString('pl-PL', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    {author(e) && ` · ${author(e)}`}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={onClose}>Zamknij</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Task card ─────────────────────────────────────────────────────────────────
 function getDueDateStatus(dueDate) {
   if (!dueDate) return null
@@ -604,8 +712,8 @@ function isDueToday(dueDate) {
   return !!dueDate && new Date(dueDate).toDateString() === new Date().toDateString()
 }
 
-function TaskCard({ task, projectName, onEdit, onDelete, onToggle }) {
-  const priorityLabel = { low: 'Niski', medium: 'Średni', high: 'Wysoki' }
+function TaskCard({ task, projectName, onEdit, onDelete, onToggle, onHistory }) {
+  const priorityLabel = PRIORITY_LABEL
   const date = new Date(task.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })
   const dueDateStatus = getDueDateStatus(task.due_date)
   const dueDateLabel = task.due_date
@@ -660,6 +768,7 @@ function TaskCard({ task, projectName, onEdit, onDelete, onToggle }) {
         </div>
       </div>
       <div className="task-actions">
+        <button className="icon-btn" onClick={e => { e.stopPropagation(); onHistory(task) }} title="Historia" aria-label="Historia"><Icon name="clock" size={15} /></button>
         <button className="icon-btn" onClick={e => { e.stopPropagation(); onEdit(task) }} title="Edytuj"><Icon name="pencil" size={15} /></button>
         <button className="icon-btn danger" onClick={e => { e.stopPropagation(); onDelete(task.id) }} title="Usuń"><Icon name="trash" size={15} /></button>
       </div>
@@ -936,7 +1045,7 @@ function Dashboard({ userEmail, onLogout }) {
   const [tasks, setTasks] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
-  const [modal, setModal] = useState(null) // null | { type: 'task', task } | { type: 'category' } | { type: 'project' } | { type: 'members', project }
+  const [modal, setModal] = useState(null) // null | { type: 'task', task } | { type: 'category' } | { type: 'project' } | { type: 'members', project } | { type: 'history', task }
   const [filters, setFilters] = useState({ status: '', priority: '', category_id: '', project_id: '', tag: '' })
   const [tagSearch, setTagSearch] = useState('')
   const [view, setView] = useState('all') // 'all' | 'overdue' | 'upcoming'
@@ -1133,6 +1242,7 @@ function Dashboard({ userEmail, onLogout }) {
       onEdit={task => setModal({ type: 'task', task })}
       onDelete={handleDelete}
       onToggle={handleToggle}
+      onHistory={task => setModal({ type: 'history', task })}
     />
   )
 
@@ -1310,6 +1420,15 @@ function Dashboard({ userEmail, onLogout }) {
           categories={categories}
           projects={projects}
           onSave={handleSaveTask}
+          onClose={() => setModal(null)}
+        />
+      )}
+      {modal?.type === 'history' && (
+        <HistoryModal
+          task={modal.task}
+          categories={categories}
+          projects={projects}
+          members={membersByProject[modal.task.project_id]}
           onClose={() => setModal(null)}
         />
       )}

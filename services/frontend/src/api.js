@@ -93,6 +93,10 @@ export const api = {
     return request('POST', `/tasks/${taskId}/reanalyze-priority`)
   },
 
+  getTaskHistory(taskId) {
+    return request('GET', `/tasks/${taskId}/history`)
+  },
+
   getUpcomingTasks(days = 7) {
     return request('GET', '/tasks/upcoming', null, { days })
   },
