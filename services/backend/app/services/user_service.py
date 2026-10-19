@@ -1,6 +1,5 @@
 """Business logic layer for user operations."""
 
-
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db.models import User
 from app.db.repository import UserRepository

@@ -1,6 +1,5 @@
 """Business logic layer for category operations."""
 
-
 from app.db.models import Category
 from app.db.repository import CategoryRepository
 from app.schemas.task import CategoryCreate

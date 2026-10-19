@@ -74,7 +74,7 @@ class TestMockAIPriorityService:
         assert "opcjonalne" in reason
 
     async def test_low_priority_later(self, service):
-        priority, reason = await service.suggest_priority("do this later", None)
+        priority, _ = await service.suggest_priority("do this later", None)
         assert priority == Priority.LOW
 
     async def test_medium_priority_no_keywords(self, service):
@@ -83,7 +83,7 @@ class TestMockAIPriorityService:
         assert reason is not None
 
     async def test_medium_priority_with_neutral_description(self, service):
-        priority, reason = await service.suggest_priority("Weekly meeting", "discuss roadmap")
+        priority, _ = await service.suggest_priority("Weekly meeting", "discuss roadmap")
         assert priority == Priority.MEDIUM
 
     async def test_description_adds_keywords(self, service):

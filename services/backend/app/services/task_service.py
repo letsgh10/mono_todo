@@ -125,9 +125,7 @@ class TaskService:
         """
         return self.repository.get_by_id(task_id, owner_id=owner_id)
 
-    def get_history(
-        self, task_id: int, owner_id: int | None = None
-    ) -> list[TaskHistory] | None:
+    def get_history(self, task_id: int, owner_id: int | None = None) -> list[TaskHistory] | None:
         """
         Get the change history of a task.
 
@@ -252,9 +250,7 @@ class TaskService:
         task.tags = new_tags
         return self.repository.update(task, history)
 
-    async def reanalyze_priority(
-        self, task_id: int, owner_id: int | None = None
-    ) -> Task | None:
+    async def reanalyze_priority(self, task_id: int, owner_id: int | None = None) -> Task | None:
         """
         Re-analyze priority for an existing task using AI.
 

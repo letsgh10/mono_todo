@@ -146,7 +146,7 @@ class OpenAIPriorityService:
             _PRIORITY_CACHE[cache_key] = result
             return result
 
-        except Exception:
+        except Exception:  # noqa: BLE001 - AI failure must never break a request
             result = (Priority.MEDIUM, None)
             _PRIORITY_CACHE[cache_key] = result
             return result
@@ -228,8 +228,10 @@ class MockAIPriorityService:
         if is_exam_related and (is_time_sensitive or is_marked_important):
             result = (
                 Priority.HIGH,
-                "Wysoki priorytet: zadanie dotyczy ważnego egzaminu w krótkim terminie "
-                "(słowa kluczowe: egzamin, jutro/bardzo ważny).",
+                (
+                    "Wysoki priorytet: zadanie dotyczy ważnego egzaminu w krótkim terminie "
+                    "(słowa kluczowe: egzamin, jutro/bardzo ważny)."
+                ),
             )
         else:
             # Find matching keywords for better explanations
@@ -261,21 +263,27 @@ class MockAIPriorityService:
                 keywords_str = ", ".join([f"'{kw}'" for kw in urgent_keywords[:3]])
                 result = (
                     Priority.HIGH,
-                    "Wysoki priorytet: zadanie zawiera słowa kluczowe "
-                    f"{keywords_str}, oraz jest związane z terminem",
+                    (
+                        "Wysoki priorytet: zadanie zawiera słowa kluczowe "
+                        f"{keywords_str}, oraz jest związane z terminem"
+                    ),
                 )
             elif low_keywords:
                 keywords_str = ", ".join([f"'{kw}'" for kw in low_keywords[:3]])
                 result = (
                     Priority.LOW,
-                    "Niski priorytet: zadanie ma charakter opcjonalny i może być "
-                    f"wykonane później (słowa kluczowe: {keywords_str})",
+                    (
+                        "Niski priorytet: zadanie ma charakter opcjonalny i może być "
+                        f"wykonane później (słowa kluczowe: {keywords_str})"
+                    ),
                 )
             else:
                 result = (
                     Priority.MEDIUM,
-                    "Średni priorytet: zadanie dotyczy codziennych obowiązków "
-                    "bez określonego terminu",
+                    (
+                        "Średni priorytet: zadanie dotyczy codziennych obowiązków "
+                        "bez określonego terminu"
+                    ),
                 )
 
         _PRIORITY_CACHE[cache_key] = result

@@ -1,6 +1,5 @@
 """API routes for task operations."""
 
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
