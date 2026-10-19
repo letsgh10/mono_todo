@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.db.models import Priority, Status, Task, User
-from app.services.ai_priority_service import MockAIPriorityService, _PRIORITY_CACHE
+from app.services.ai_priority_service import _PRIORITY_CACHE, MockAIPriorityService
 
 
 @pytest.fixture(autouse=True)

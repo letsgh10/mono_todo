@@ -1,6 +1,6 @@
 """Database session management."""
 
-from sqlmodel import SQLModel, create_engine, Session
+from sqlmodel import Session, SQLModel, create_engine
 
 from app.core.config import settings
 

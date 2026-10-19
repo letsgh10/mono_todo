@@ -1,6 +1,5 @@
 """Business logic layer for category operations."""
 
-from typing import Optional
 
 from app.db.models import Category
 from app.db.repository import CategoryRepository
@@ -26,7 +25,7 @@ class CategoryService:
         category = Category(name=data.name, color=data.color)
         return self.repository.create(category), True
 
-    def delete_category(self, category_id: int) -> Optional[Category]:
+    def delete_category(self, category_id: int) -> Category | None:
         """
         Delete a category and nullify all tasks assigned to it.
 

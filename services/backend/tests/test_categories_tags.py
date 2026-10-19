@@ -9,9 +9,8 @@ BDD scenarios for:
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session
 
-from app.db.models import Priority, Status, Task, User
+from app.db.models import Priority
 from app.services.ai_priority_service import _PRIORITY_CACHE
 
 

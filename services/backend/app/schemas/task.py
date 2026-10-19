@@ -1,7 +1,6 @@
 """Pydantic schemas for task API requests and responses."""
 
 from datetime import date, datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -12,7 +11,7 @@ class CategoryCreate(BaseModel):
     """Schema for creating a new category."""
 
     name: str = Field(max_length=100, description="Category name")
-    color: Optional[str] = Field(default=None, max_length=20, description="Hex color code")
+    color: str | None = Field(default=None, max_length=20, description="Hex color code")
 
 
 class CategoryResponse(BaseModel):
@@ -20,7 +19,7 @@ class CategoryResponse(BaseModel):
 
     id: int
     name: str
-    color: Optional[str] = None
+    color: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -35,7 +34,7 @@ class TaskBase(BaseModel):
     """Base task schema with common fields."""
 
     title: str = Field(max_length=200, description="Task title")
-    description: Optional[str] = Field(
+    description: str | None = Field(
         default=None,
         max_length=1000,
         description="Task description",
@@ -47,34 +46,34 @@ class TaskBase(BaseModel):
 class TaskCreate(TaskBase):
     """Schema for creating a new task."""
 
-    category_id: Optional[int] = None
-    project_id: Optional[int] = None
+    category_id: int | None = None
+    project_id: int | None = None
     tags: list[str] = []
-    due_date: Optional[date] = None
+    due_date: date | None = None
 
 
 class TaskUpdate(BaseModel):
     """Schema for updating an existing task."""
 
-    title: Optional[str] = Field(default=None, max_length=200)
-    description: Optional[str] = Field(default=None, max_length=1000)
-    priority: Optional[Priority] = None
-    priority_reason: Optional[str] = Field(default=None, max_length=500)
-    status: Optional[Status] = None
-    category_id: Optional[int] = None
-    due_date: Optional[date] = None
+    title: str | None = Field(default=None, max_length=200)
+    description: str | None = Field(default=None, max_length=1000)
+    priority: Priority | None = None
+    priority_reason: str | None = Field(default=None, max_length=500)
+    status: Status | None = None
+    category_id: int | None = None
+    due_date: date | None = None
 
 
 class TaskResponse(TaskBase):
     """Schema for task API responses."""
 
     id: int
-    priority_reason: Optional[str] = None
-    due_date: Optional[date] = None
+    priority_reason: str | None = None
+    due_date: date | None = None
     created_at: datetime
     updated_at: datetime
-    category: Optional[CategoryResponse] = None
-    project_id: Optional[int] = None
+    category: CategoryResponse | None = None
+    project_id: int | None = None
     tags: list[str] = []
     ai_override: bool = False
 
@@ -91,9 +90,9 @@ class TaskHistoryResponse(BaseModel):
 
     id: int
     field: str
-    old_value: Optional[str] = None
-    new_value: Optional[str] = None
-    changed_by_id: Optional[int] = None
+    old_value: str | None = None
+    new_value: str | None = None
+    changed_by_id: int | None = None
     changed_at: datetime
 
     model_config = {"from_attributes": True}
@@ -103,7 +102,7 @@ class PriorityAnalysisRequest(BaseModel):
     """Request schema for standalone priority analysis endpoint."""
 
     title: str = Field(max_length=200, description="Task title")
-    description: Optional[str] = Field(
+    description: str | None = Field(
         default=None,
         max_length=1000,
         description="Task description",

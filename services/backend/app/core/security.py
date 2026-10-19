@@ -1,7 +1,6 @@
 """Password hashing and JWT token utilities."""
 
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 import bcrypt
 from jose import jwt
@@ -19,7 +18,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Create a signed JWT access token."""
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + (

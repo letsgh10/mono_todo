@@ -1,7 +1,7 @@
 """Repository layer for database operations."""
 
+from collections.abc import Sequence
 from datetime import date, datetime, timedelta, timezone
-from typing import Optional, Sequence
 
 from sqlalchemy import delete, func, or_, text
 from sqlmodel import Session, select
@@ -31,10 +31,10 @@ class UserRepository:
         self.session.refresh(user)
         return user
 
-    def get_by_id(self, user_id: int) -> Optional[User]:
+    def get_by_id(self, user_id: int) -> User | None:
         return self.session.get(User, user_id)
 
-    def get_by_email(self, email: str) -> Optional[User]:
+    def get_by_email(self, email: str) -> User | None:
         return self.session.exec(select(User).where(User.email == email)).first()
 
 
@@ -55,10 +55,10 @@ class ProjectRepository:
         self.session.commit()
         return project
 
-    def get_by_id(self, project_id: int) -> Optional[Project]:
+    def get_by_id(self, project_id: int) -> Project | None:
         return self.session.get(Project, project_id)
 
-    def get_member(self, project_id: int, user_id: int) -> Optional[ProjectMember]:
+    def get_member(self, project_id: int, user_id: int) -> ProjectMember | None:
         return self.session.get(ProjectMember, (project_id, user_id))
 
     def add_member(self, project_id: int, user_id: int) -> ProjectMember:
@@ -110,10 +110,10 @@ class CategoryRepository:
         self.session.refresh(category)
         return category
 
-    def get_by_id(self, category_id: int) -> Optional[Category]:
+    def get_by_id(self, category_id: int) -> Category | None:
         return self.session.get(Category, category_id)
 
-    def get_by_name(self, name: str) -> Optional[Category]:
+    def get_by_name(self, name: str) -> Category | None:
         return self.session.exec(select(Category).where(Category.name == name)).first()
 
     def delete_and_nullify_tasks(self, category_id: int) -> bool:
@@ -151,7 +151,7 @@ class TaskRepository:
         member_projects = select(ProjectMember.project_id).where(ProjectMember.user_id == user_id)
         return statement.where(or_(Task.owner_id == user_id, Task.project_id.in_(member_projects)))
 
-    def get_by_id(self, task_id: int, owner_id: Optional[int] = None) -> Optional[Task]:
+    def get_by_id(self, task_id: int, owner_id: int | None = None) -> Task | None:
         """Get a task by ID, optionally scoped to a user (owner or project member)."""
         task = self.session.get(Task, task_id)
         if task is None:
@@ -162,7 +162,7 @@ class TaskRepository:
             return task
         return None
 
-    def get_category(self, category_id: int) -> Optional[Category]:
+    def get_category(self, category_id: int) -> Category | None:
         """Get a category by ID."""
         return self.session.get(Category, category_id)
 
@@ -177,14 +177,14 @@ class TaskRepository:
 
     def get_all(
         self,
-        status: Optional[Status] = None,
-        priority: Optional[Priority] = None,
+        status: Status | None = None,
+        priority: Priority | None = None,
         skip: int = 0,
         limit: int = 100,
-        owner_id: Optional[int] = None,
-        category_id: Optional[int] = None,
-        project_id: Optional[int] = None,
-        tag: Optional[str] = None,
+        owner_id: int | None = None,
+        category_id: int | None = None,
+        project_id: int | None = None,
+        tag: str | None = None,
         overdue: bool = False,
     ) -> list[Task]:
         """Get all tasks with optional filtering."""
@@ -216,7 +216,7 @@ class TaskRepository:
     def get_upcoming(
         self,
         days: int,
-        owner_id: Optional[int] = None,
+        owner_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> list[Task]:
@@ -259,7 +259,7 @@ class TaskRepository:
             select(Task.priority, func.count(Task.id)).group_by(Task.priority)
         ).all()
 
-    def delete(self, task_id: int, owner_id: Optional[int] = None) -> bool:
+    def delete(self, task_id: int, owner_id: int | None = None) -> bool:
         """Delete a task by ID, optionally scoped to a user (owner or project member)."""
         task = self.get_by_id(task_id, owner_id=owner_id)
         if task:

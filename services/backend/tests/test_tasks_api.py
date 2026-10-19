@@ -1,6 +1,5 @@
 """Tests for task API endpoints."""
 
-from datetime import date, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,9 +7,9 @@ from sqlmodel import Session
 
 from app.db.models import Priority, Status, Task, User
 from app.services.ai_priority_service import (
+    _PRIORITY_CACHE,
     MockAIPriorityService,
     OpenAIPriorityService,
-    _PRIORITY_CACHE,
 )
 
 

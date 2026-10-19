@@ -1,7 +1,7 @@
 """AI service for task prioritization using OpenAI."""
 
 from datetime import date
-from typing import Dict, Protocol, Tuple
+from typing import Protocol
 
 from app.db.models import Priority
 
@@ -32,11 +32,11 @@ class AIPriorityService(Protocol):
 
 
 PriorityCacheKey = str
-PriorityCacheValue = Tuple[Priority, str | None]
+PriorityCacheValue = tuple[Priority, str | None]
 
 # Simple in-memory cache for priority suggestions.
 # Key: normalized "title|description|category" string
-_PRIORITY_CACHE: Dict[PriorityCacheKey, PriorityCacheValue] = {}
+_PRIORITY_CACHE: dict[PriorityCacheKey, PriorityCacheValue] = {}
 
 
 def _build_cache_key(

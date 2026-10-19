@@ -1,6 +1,5 @@
 """API routes for task operations."""
 
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
@@ -32,17 +31,17 @@ class TaskListParams:
 
     def __init__(
         self,
-        status: Optional[Status] = Query(default=None, description="Filter by status"),
-        priority: Optional[Priority] = Query(default=None, description="Filter by priority"),
-        category_id: Optional[int] = Query(default=None, description="Filter by category ID"),
-        project_id: Optional[int] = Query(default=None, description="Filter by project ID"),
-        tag: Optional[str] = Query(default=None, description="Filter by tag"),
+        status: Status | None = Query(default=None, description="Filter by status"),
+        priority: Priority | None = Query(default=None, description="Filter by priority"),
+        category_id: int | None = Query(default=None, description="Filter by category ID"),
+        project_id: int | None = Query(default=None, description="Filter by project ID"),
+        tag: str | None = Query(default=None, description="Filter by tag"),
         overdue: bool = Query(
             default=False, description="Return only overdue tasks (past due_date, not done)"
         ),
         skip: int = Query(default=0, ge=0, description="Number of records to skip"),
         limit: int = Query(default=100, ge=1, le=1000, description="Maximum number of records"),
-    ):
+    ) -> None:
         self.status = status
         self.priority = priority
         self.category_id = category_id
@@ -74,7 +73,7 @@ def get_task_service(
 
 
 def _ensure_project_member(
-    project_id: Optional[int], user_id: int, project_repository: ProjectRepository
+    project_id: int | None, user_id: int, project_repository: ProjectRepository
 ) -> None:
     """Raise 404 if the project does not exist, 403 if the user is not one of its members."""
     if project_id is None:
@@ -83,14 +82,6 @@ def _ensure_project_member(
         raise HTTPException(status_code=404, detail="Project not found")
     if not project_repository.get_member(project_id, user_id):
         raise HTTPException(status_code=403, detail="Not a member of this project")
-
-
-def _get_category_name(category_id: Optional[int], session: Session) -> Optional[str]:
-    """Resolve category name from ID."""
-    if not category_id:
-        return None
-    category = session.get(Category, category_id)
-    return category.name if category else None
 
 
 @router.post("/", response_model=TaskResponse, status_code=201)
@@ -314,7 +305,7 @@ def get_task_history(
 
 
 @router.patch("/{task_id}", response_model=TaskResponse)
-async def update_task(
+def update_task(
     task_id: int,
     task_data: TaskUpdate,
     service: TaskService = Depends(get_task_service),
@@ -372,7 +363,7 @@ def add_tag(
         Updated task
 
     Raises:
-        HTTPException: 404 if task not found
+        HTTPException: 404 if task not found or not accessible to the current user
     """
     task = service.add_tag(task_id, tag_data.name, owner_id=current_user.id)
     if not task:
@@ -402,7 +393,7 @@ def remove_tag(
         Updated task
 
     Raises:
-        HTTPException: 404 if task not found
+        HTTPException: 404 if task not found or not accessible to the current user
     """
     task = service.remove_tag(task_id, tag_name, owner_id=current_user.id)
     if not task:
@@ -461,7 +452,8 @@ def delete_task(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     notifier.deleted(task)  # reads the row before it is gone; sent after the response
-    service.delete_task(task_id, owner_id=current_user.id)
+    if not service.delete_task(task_id, owner_id=current_user.id):
+        raise HTTPException(status_code=404, detail="Task not found")
 
 
 def _updated(task: Task, service: TaskService, notifier: TaskNotifier) -> TaskResponse:

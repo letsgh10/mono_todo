@@ -1,14 +1,13 @@
 """Pytest configuration and fixtures."""
 
-from typing import Optional
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import SQLModel, create_engine, Session
+from sqlmodel import Session, SQLModel, create_engine
 
-from app.main import app
+from app.core.security import create_access_token, hash_password
 from app.db.models import User
-from app.core.security import hash_password, create_access_token
+from app.main import app
 
 
 @pytest.fixture(scope="function")
@@ -61,10 +60,10 @@ def _auth_headers(user: User) -> dict:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _build_client(test_engine, user: Optional[User] = None):
+def _build_client(test_engine, user: User | None = None):
     """Yield a TestClient with session/AI overrides, optionally authenticated as `user`."""
-    from app.db.session import get_session
     from app.api.routers.tasks import get_ai_service
+    from app.db.session import get_session
     from app.services.ai_priority_service import MockAIPriorityService
 
     def override_get_session():
