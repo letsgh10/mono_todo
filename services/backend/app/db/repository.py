@@ -1,9 +1,9 @@
 """Repository layer for database operations."""
 
 from datetime import date, datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Sequence
 
-from sqlalchemy import func, or_, text
+from sqlalchemy import delete, func, or_, text
 from sqlmodel import Session, select
 
 from app.db.models import (
@@ -14,6 +14,7 @@ from app.db.models import (
     ProjectRole,
     Status,
     Task,
+    TaskHistory,
     User,
 )
 
@@ -165,6 +166,15 @@ class TaskRepository:
         """Get a category by ID."""
         return self.session.get(Category, category_id)
 
+    def get_history(self, task_id: int) -> list[TaskHistory]:
+        """Return the change history of a task, oldest first."""
+        statement = (
+            select(TaskHistory)
+            .where(TaskHistory.task_id == task_id)
+            .order_by(TaskHistory.changed_at, TaskHistory.id)
+        )
+        return list(self.session.exec(statement).all())
+
     def get_all(
         self,
         status: Optional[Status] = None,
@@ -224,10 +234,11 @@ class TaskRepository:
         statement = statement.order_by(Task.due_date).offset(skip).limit(limit)
         return list(self.session.exec(statement).all())
 
-    def update(self, task: Task) -> Task:
-        """Update an existing task."""
+    def update(self, task: Task, history: Sequence[TaskHistory] = ()) -> Task:
+        """Update an existing task, saving its history entries in the same transaction."""
         task.updated_at = datetime.now(timezone.utc)
         self.session.add(task)
+        self.session.add_all(history)
         self.session.commit()
         self.session.refresh(task)
         return task
@@ -252,6 +263,7 @@ class TaskRepository:
         """Delete a task by ID, optionally scoped to a user (owner or project member)."""
         task = self.get_by_id(task_id, owner_id=owner_id)
         if task:
+            self.session.exec(delete(TaskHistory).where(TaskHistory.task_id == task_id))
             self.session.delete(task)
             self.session.commit()
             return True

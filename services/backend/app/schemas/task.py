@@ -86,6 +86,19 @@ class TaskResponse(TaskBase):
         return v if v is not None else []
 
 
+class TaskHistoryResponse(BaseModel):
+    """Schema for a single entry of a task's change history."""
+
+    id: int
+    field: str
+    old_value: Optional[str] = None
+    new_value: Optional[str] = None
+    changed_by_id: Optional[int] = None
+    changed_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class PriorityAnalysisRequest(BaseModel):
     """Request schema for standalone priority analysis endpoint."""
 

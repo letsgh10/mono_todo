@@ -17,6 +17,7 @@ from app.schemas.task import (
     PriorityAnalysisResponse,
     TagCreate,
     TaskCreate,
+    TaskHistoryResponse,
     TaskResponse,
     TaskUpdate,
 )
@@ -284,6 +285,32 @@ def get_task(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     return service.to_response(task)
+
+
+@router.get("/{task_id}/history", response_model=list[TaskHistoryResponse])
+def get_task_history(
+    task_id: int,
+    service: TaskService = Depends(get_task_service),
+    current_user: User = Depends(get_current_user),
+) -> list[TaskHistoryResponse]:
+    """
+    Get the change history of a task (owned by the user or shared via a project).
+
+    Args:
+        task_id: Task identifier
+        service: Task service dependency
+        current_user: Authenticated user
+
+    Returns:
+        History entries, oldest first
+
+    Raises:
+        HTTPException: 404 if task not found or not accessible to the current user
+    """
+    history = service.get_history(task_id, owner_id=current_user.id)
+    if history is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return [TaskHistoryResponse.model_validate(entry) for entry in history]
 
 
 @router.patch("/{task_id}", response_model=TaskResponse)

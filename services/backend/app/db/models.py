@@ -66,6 +66,18 @@ class Category(SQLModel, table=True):
     color: Optional[str] = Field(default=None, max_length=20)
 
 
+class TaskHistory(SQLModel, table=True):
+    """One changed field of a task: who changed it, when, and from what to what."""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    task_id: int = Field(foreign_key="task.id", index=True)
+    changed_by_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    field: str = Field(max_length=50)
+    old_value: Optional[str] = Field(default=None, max_length=1000)
+    new_value: Optional[str] = Field(default=None, max_length=1000)
+    changed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 class Task(SQLModel, table=True):
     """Task database model."""
 
