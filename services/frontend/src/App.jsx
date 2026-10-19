@@ -1043,6 +1043,7 @@ function pluralTasks(n) {
 
 function Dashboard({ userEmail, onLogout }) {
   const [tasks, setTasks] = useState([])
+  const [allTasks, setAllTasks] = useState([]) // unfiltered, feeds the sidebar counters
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(null) // null | { type: 'task', task } | { type: 'category' } | { type: 'project' } | { type: 'members', project } | { type: 'history', task }
@@ -1055,6 +1056,8 @@ function Dashboard({ userEmail, onLogout }) {
   const loadTasks = useCallback(async () => {
     try {
       let data
+      // Sidebar counters describe all tasks, whatever view or filter is active.
+      const allPromise = api.getTasks({})
       if (view === 'overdue') {
         data = await api.getTasks({ ...filters, overdue: true })
       } else if (view === 'upcoming') {
@@ -1064,6 +1067,7 @@ function Dashboard({ userEmail, onLogout }) {
         data = await api.getTasks(filters)
       }
       setTasks(data)
+      setAllTasks(await allPromise)
       // Extract categories from tasks
       const cats = {}
       data.forEach(t => { if (t.category) cats[t.category.id] = t.category })
@@ -1184,7 +1188,13 @@ function Dashboard({ userEmail, onLogout }) {
   const high = tasks.filter(t => t.priority === 'high' && t.status === 'todo')
   const overdue = tasks.filter(t => t.status === 'todo' && getDueDateStatus(t.due_date) === 'overdue')
   const dueToday = todo.filter(t => isDueToday(t.due_date))
-  const counts = { all: tasks.length, todo: todo.length, done: done.length, high: high.length, overdue: overdue.length }
+  const counts = {
+    all: allTasks.length,
+    todo: allTasks.filter(t => t.status === 'todo').length,
+    done: allTasks.filter(t => t.status === 'done').length,
+    high: allTasks.filter(t => t.priority === 'high' && t.status === 'todo').length,
+    overdue: allTasks.filter(t => t.status === 'todo' && getDueDateStatus(t.due_date) === 'overdue').length,
+  }
 
   // Which sidebar view the current filters correspond to (null while browsing "Nadchodzące").
   const activeNav = view === 'upcoming' ? null
