@@ -134,6 +134,14 @@ class DashboardPage:
         """Task card with exactly this title."""
         return self.cards.filter(has=self.page.locator(".task-title").get_by_text(title, exact=True))
 
+    def nav_item(self, label: str) -> Locator:
+        """Sidebar saved view ('Wszystkie', 'Pilne', ...)."""
+        return self.page.locator(".nav-item").filter(has=self.page.locator(".nav-item-label").get_by_text(label, exact=True))
+
+    def nav_count(self, label: str) -> Locator:
+        """Counter pill of a sidebar saved view."""
+        return self.nav_item(label).locator(".count-pill")
+
     def card_titles(self) -> list[str]:
         """Card titles in display order."""
         return self.cards.locator(".task-title").all_text_contents()
@@ -179,6 +187,11 @@ class DashboardPage:
 
     def logout(self) -> None:
         self.logout_button.click()
+
+    def select_nav(self, label: str) -> None:
+        """Clicks a sidebar view and waits for it to become active."""
+        self.nav_item(label).click()
+        expect(self.nav_item(label)).to_have_class(ACTIVE_CLASS)
 
     # ── views (filters) ───────────────────────────────────────────────────────
 

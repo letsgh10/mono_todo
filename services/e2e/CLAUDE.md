@@ -55,7 +55,7 @@ Playwright (sync API) + `pytest-playwright`. Chromium only, configured in `pytes
 - `test_tasks.py` — add / edit / delete / toggle status
 - `test_deadlines.py` — due dates, overdue filter, upcoming (7-day) view, AI priority with due date
 - `test_projects.py` — create project, members (add / unknown email / remove), project chip filter, realtime push to a second user's dashboard (`other_user_page` fixture logs the second user in via the API; `ProjectsPanel.live_status` exposes the socket state)
-- `test_projects.py` — projects panel, members (add by email / remove), tasks filtered by project
+- `test_views.py` — regression: sidebar counters ("Wszystkie", "Pilne", ...) stay stable when switching views
 
 ## Key patterns
 
