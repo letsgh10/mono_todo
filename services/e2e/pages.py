@@ -90,6 +90,28 @@ class TaskModal:
         return response_info.value
 
 
+class HistoryModal:
+    """Task change history modal."""
+
+    def __init__(self, page: Page) -> None:
+        self.page = page
+        self.root = page.locator(".modal")
+        self.overlay = page.locator(".modal-overlay")
+        self.rows = self.root.locator(".history-row")
+        self.empty = self.root.get_by_text("Brak zmian dla tego zadania")
+        self.error = self.root.locator(".alert-error")
+        self.retry_button = self.root.get_by_role("button", name="Spróbuj ponownie")
+        self.close_button = self.root.locator(".modal-footer").get_by_role("button", name="Zamknij")
+
+    def row(self, field: str) -> Locator:
+        """History row for a field label (e.g. 'Priorytet')."""
+        return self.rows.filter(has=self.page.locator(".history-field").get_by_text(field, exact=True))
+
+    def close(self) -> None:
+        self.close_button.click()
+        expect(self.overlay).to_be_hidden()
+
+
 class DashboardPage:
     """Main view with the task list (user logged in)."""
 
@@ -127,6 +149,12 @@ class DashboardPage:
     def open_edit_modal(self, title: str) -> TaskModal:
         self.task_card(title).get_by_title("Edytuj").click()
         modal = TaskModal(self.page)
+        expect(modal.root).to_be_visible()
+        return modal
+
+    def open_history(self, title: str) -> HistoryModal:
+        self.task_card(title).get_by_title("Historia").click()
+        modal = HistoryModal(self.page)
         expect(modal.root).to_be_visible()
         return modal
 
